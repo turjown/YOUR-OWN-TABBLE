@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create Your Own List</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 25px 12px;
+  background: #0b1120;
+  color: white;
+  font-family: Arial, sans-serif;
+}
+
+.container {
+  max-width: 950px;
+  margin: auto;
+  background: #111c30;
+  padding: 22px;
+  border-radius: 16px;
+  box-shadow: 0 8px 35px #0005;
+}
+
+h1 {
+  text-align: center;
+  font-size: 27px;
+  letter-spacing: 2px;
+  margin-bottom: 25px;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-bottom: 18px;
+}
+
+button, select {
+  border: none;
+  border-radius: 8px;
+  padding: 11px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+button {
+  background: #2563eb;
+  color: white;
+}
+
+button:hover {
+  opacity: .85;
+}
+
+.danger {
+  background: #dc3545;
+}
+
+.green {
+  background: #16a34a;
+}
+
+.mode {
+  background: #263650;
+  color: white;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 450px;
+}
+
+th, td {
+  border: 1px solid #34445e;
+  padding: 13px;
+  text-align: center;
+  min-width: 110px;
+}
+
+th {
+  background: #1e40af;
+}
+
+td {
+  background: #17253b;
+  outline: none;
+}
+
+td:focus, th:focus {
+  background: #263f64;
+  outline: 2px solid #60a5fa;
+}
+
+.note {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 12px;
+  margin-top: 20px;
+}
+
+.status {
+  color: #4ade80;
+  font-size: 12px;
+  margin-top: 12px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1 contenteditable="true">
+CREATE YOUR OWN LIST
+</h1>
+
+<div class="toolbar">
+
+<button onclick="addRow()">+ Add Row</button>
+
+<button onclick="addColumn()">+ Add Column</button>
+
+<button class="danger" onclick="deleteRow()">
+Delete Last Row
+</button>
+
+<button class="danger" onclick="deleteColumn()">
+Delete Last Column
+</button>
+
+<button class="green" onclick="downloadCSV()">
+Download CSV
+</button>
+
+<button class="mode" onclick="resetTable()">
+Reset Table
+</button>
+
+</div>
+
+<div class="table-wrap">
+
+<table id="myTable">
+<thead>
+<tr>
+<th contenteditable="true">No.</th>
+<th contenteditable="true">Name</th>
+<th contenteditable="true">Details</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td contenteditable="true">01</td>
+<td contenteditable="true">Your Name</td>
+<td contenteditable="true">Write Here</td>
+</tr>
+
+<tr>
+<td contenteditable="true">02</td>
+<td contenteditable="true">Your Name</td>
+<td contenteditable="true">Write Here</td>
+</tr>
+
+<tr>
+<td contenteditable="true">03</td>
+<td contenteditable="true">Your Name</td>
+<td contenteditable="true">Write Here</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+
+<div class="status" id="status">
+● Auto Save Enabled
+</div>
+
+<p class="note">
+Click any cell to edit your list ✨
+</p>
+
+</div>
+
+<script>
+
+const table = document.getElementById("myTable");
+const statusText = document.getElementById("status");
+
+function saveTable() {
+  localStorage.setItem("myOwnList", table.innerHTML);
+  statusText.textContent = "● Saved successfully";
+}
+
+function loadTable() {
+  const saved = localStorage.getItem("myOwnList");
+  if(saved) {
+    table.innerHTML = saved;
+  }
+}
+
+function addRow() {
+  const cols = table.rows[0].cells.length;
+  const row = table.insertRow();
+
+  for(let i = 0; i < cols; i++) {
+    const cell = row.insertCell();
+    cell.contentEditable = "true";
+    cell.textContent = i === 0
+      ? String(table.rows.length - 1).padStart(2, "0")
+      : "Write Here";
+  }
+  saveTable();
+}
+
+function addColumn() {
+  for(let row of table.rows) {
+    const cell = document.createElement(
+      row.parentElement.tagName === "THEAD" ? "th" : "td"
+    );
+    cell.contentEditable = "true";
+    cell.textContent = "New Column";
+    row.appendChild(cell);
+  }
+  saveTable();
+}
+
+function deleteRow() {
+  if(table.rows.length > 2) {
+    table.deleteRow(table.rows.length - 1);
+    saveTable();
+  } else {
+    alert("At least one data row is required!");
+  }
+}
+
+function deleteColumn() {
+  if(table.rows[0].cells.length > 1) {
+    for(let row of table.rows) {
+      row.deleteCell(row.cells.length - 1);
+    }
+    saveTable();
+  } else {
+    alert("At least one column is required!");
+  }
+}
+
+function resetTable() {
+  if(confirm("Reset your entire table?")) {
+    localStorage.removeItem("myOwnList");
+    location.reload();
+  }
+}
+
+function downloadCSV() {
+  let csv = [];
+
+  for(let row of table.rows) {
+    let cells = [];
+
+    for(let cell of row.cells) {
+      cells.push('"' + cell.innerText.replace(/"/g, '""') + '"');
+    }
+
+    csv.push(cells.join(","));
+  }
+
+  const blob = new Blob(
+    ["\uFEFF" + csv.join("\n")],
+    {type: "text/csv;charset=utf-8"}
+  );
+
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "my-own-list.csv";
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+table.addEventListener("input", saveTable);
+
+loadTable();
+
+</script>
+
+</body>
+</html>
